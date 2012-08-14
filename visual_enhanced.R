@@ -1,10 +1,29 @@
 
-args <- commandArgs(trailingOnly=TRUE)
-filename <- args[1]
-row.index <- as.integer(args[2])
-filepath_out <- args[3]
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# 
+# The script is an ad-hoc method for measuring the distance,
+# or rather the acceptability of the distance between two cdf.
+# More specifically, the algorithm computes the empirical cdf
+# using a specified number of points, and repeats the simulation
+# many times in order to obtain confidence bounds around the cdf.
+# Them, the cdf of the approximation is computed, and we count the
+# proportion of points for which the approximation is NOT within
+# the bounds.
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-params <- read.csv(filename)
+
+# Parameters
+param.file <- "params.csv"
+base.filepath.out <- "res/out"
+row.number <- 10
+
+# Command line arguments
+args <- commandArgs(trailingOnly=TRUE)
+row.index <- as.integer(args[1])
+filepath_out <- paste(base.filepath.out, row.index, ".csv", sep="")
+
+
 
 
 get.convo.emp.cdf <- function(m1, sd1, m2, sd2, n.points, n.sample){
@@ -92,14 +111,48 @@ test.cdf.closeness <- function(m1, sd1, m2, sd2, n.sim, n.points=100, n.samples=
 }
 
 
-m1 <- params$m1[row.index]
-m2 <- params$m2[row.index]
-sd1 <- params$sd1[row.index]
-sd2 <- params$sd2[row.index]
+# Note that the following could be written much more compactly using a data.table,
+# but given the recent segfault issues I had using data.tables, I don't feel like
+# spending hours debugging it on the cluster, so I stick to a good ol' loop. Plus
+# with ten iterations, it's not gonna be critically slow..
 
-res <- test.cdf.closeness(m1, sd1, m2, sd2, 2000000, n.points=200)
+params <- read.csv(param.file)
 
-dt.out <- data.frame(m1=m1, m2=m2, sd1=sd1, sd2=sd2, distance=res)
+m1.list <- NULL
+m2.list <- NULL
+sd1.list <- NULL
+sd2.list <- NULL
+distance.list <- NULL
+
+
+# takes care of the edge cases
+if ( (row.index - 1) * row.number + row.number > dim(params)[1] ){
+  row.count <- row.number - (row.index - 1) * row.number - row.number + dim(params)[1]
+}else{
+  row.count <- row.number
+}
+
+
+for (i in seq(1, row.count)){
+  print(i)
+  
+  ind <- (row.index - 1) * row.number + i
+  
+  m1 <- params$m1[ind]
+  m2 <- params$m2[ind]
+  sd1 <- params$sd1[ind]
+  sd2 <- params$sd2[ind]
+  distance <- test.cdf.closeness(m1, sd1, m2, sd2, 2000000, n.points=200)
+
+  m1.list <- c(m1.list, m1)
+  m2.list <- c(m2.list, m2)
+  sd1.list <- c(sd1.list, sd1)
+  sd2.list <- c(sd2.list, sd2)
+
+  distance.list <- c(distance.list, distance)
+}
+  
+dt.out <- data.frame(m1=m1.list, m2=m2.list, sd1=sd1.list, sd2=sd2.list, distance=distance.list)
 
 write.csv(dt.out, filepath_out)
 
