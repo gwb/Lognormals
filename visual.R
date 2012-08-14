@@ -46,36 +46,36 @@ return(g)
 }
 
 
-# equal low sds, varying means
-g1 <- get.convol.emp.CDFs(2, 1, 5, 1, 1000000)
-g2 <- get.convol.emp.CDFs(5, 1, 5, 1, 1000000)
-g3 <- get.convol.emp.CDFs(5, 1, 10, 1, 1000000)
-g4 <- get.convol.emp.CDFs(10, 1, 10, 1, 1000000)
-
-stack_plots(list(g1,g2,g3,g4), 2,2, add_opts=function(x) opts(legend.position="bottom"))
-
-# equal means, varying sds
-g1 <- get.convol.emp.CDFs(5, 1, 5, 1, 1000000)
-g2 <- get.convol.emp.CDFs(5, 3, 5, 1, 1000000)
-g3 <- get.convol.emp.CDFs(5, 5, 5, 1, 1000000)
-g4 <- get.convol.emp.CDFs(5, 2, 5, 2, 1000000)
-g5 <- get.convol.emp.CDFs(5, 3, 5, 3, 1000000)
-g6 <- get.convol.emp.CDFs(5, 4, 5, 4, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6), 2,3, add_opts=function(x) opts(legend.position="bottom"))
-
-# one mean low, one high, varying sds
-g1 <- get.convol.emp.CDFs(5, 1, 10, 1, 1000000)
-g2 <- get.convol.emp.CDFs(5, 3, 10, 1, 1000000)
-g3 <- get.convol.emp.CDFs(5, 5, 10, 1, 1000000)
-g4 <- get.convol.emp.CDFs(5, 1, 10, 2, 1000000)
-g5 <- get.convol.emp.CDFs(5, 1, 10, 3, 1000000)
-g6 <- get.convol.emp.CDFs(5, 1, 10, 6, 1000000)
-g7 <- get.convol.emp.CDFs(5, 2, 10, 2, 1000000)
-g8 <- get.convol.emp.CDFs(5, 3, 10, 3, 1000000)
-g9 <- get.convol.emp.CDFs(5, 5, 10, 5, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, add_opts=function(x) opts(legend.position="bottom"))
+## equal low sds, varying means
+#g1 <- get.convol.emp.CDFs(2, 1, 5, 1, 1000000)
+#g2 <- get.convol.emp.CDFs(5, 1, 5, 1, 1000000)
+#g3 <- get.convol.emp.CDFs(5, 1, 10, 1, 1000000)
+#g4 <- get.convol.emp.CDFs(10, 1, 10, 1, 1000000)
+#
+#stack_plots(list(g1,g2,g3,g4), 2,2, add_opts=function(x) opts(legend.position="bottom"))
+#
+## equal means, varying sds
+#g1 <- get.convol.emp.CDFs(5, 1, 5, 1, 1000000)
+#g2 <- get.convol.emp.CDFs(5, 3, 5, 1, 1000000)
+#g3 <- get.convol.emp.CDFs(5, 5, 5, 1, 1000000)
+#g4 <- get.convol.emp.CDFs(5, 2, 5, 2, 1000000)
+#g5 <- get.convol.emp.CDFs(5, 3, 5, 3, 1000000)
+#g6 <- get.convol.emp.CDFs(5, 4, 5, 4, 1000000)
+#
+#stack_plots(list(g1,g2,g3,g4,g5,g6), 2,3, add_opts=function(x) opts(legend.position="bottom"))
+#
+## one mean low, one high, varying sds
+#g1 <- get.convol.emp.CDFs(5, 1, 10, 1, 1000000)
+#g2 <- get.convol.emp.CDFs(5, 3, 10, 1, 1000000)
+#g3 <- get.convol.emp.CDFs(5, 5, 10, 1, 1000000)
+#g4 <- get.convol.emp.CDFs(5, 1, 10, 2, 1000000)
+#g5 <- get.convol.emp.CDFs(5, 1, 10, 3, 1000000)
+#g6 <- get.convol.emp.CDFs(5, 1, 10, 6, 1000000)
+#g7 <- get.convol.emp.CDFs(5, 2, 10, 2, 1000000)
+#g8 <- get.convol.emp.CDFs(5, 3, 10, 3, 1000000)
+#g9 <- get.convol.emp.CDFs(5, 5, 10, 5, 1000000)
+#
+#stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, add_opts=function(x) opts(legend.position="bottom"))
 
 
 
@@ -90,12 +90,87 @@ double_factorial <- function(n){
 
 get.convol.emp.all.CDFs <- function(u1,s1, u2, s2, nl){
 
-# Temporary, just to debug
-#u1 = 5
-#s1 = 1
-#u2 = 10
-#s2 = 2
-#nl = 100000
+# Functions to convert u and s in log EY and Var EY
+get.SDY <- function (u,s) return( log( sqrt( (exp(s^2) - 1) * exp(2 * u + (s^2)) ) ) )
+get.EY <- function (u,s) return(u + s^2/2)
+
+m1 <- get.EY(u1,s1)
+sd1 <- get.SDY(u1,s1)
+m2 <- get.EY(u2,s2)
+sd2 <- get.SDY(u2,s2)
+
+
+# Defines sample
+y1 <- rnorm(nl, u1, s1)
+y2 <- rnorm(nl, u2, s2)
+simul.sample = y1 + log(1 + exp(y2 - y1))
+
+# Obtains the quantiles for the samples. This allows us to make the density
+# estimation more robust to sampling variations
+qtile <- quantile(x=simul.sample, probs=c(0.01, 0.99))
+
+
+# Computes the moments used for matching
+# -- the classical mean and std
+m <- mean(simul.sample)
+s <- sqrt(var(simul.sample))
+
+# -- the std obtained from the 4th central moment
+#    for the normal approximation
+s.4 <- (mean((simul.sample-m)^4) / double_factorial(3))^(1/4)
+
+# -- the moments necessary for the t - approximation
+V <- var(simul.sample)
+mu <- mean(simul.sample)
+K <- kurtosis(simul.sample-mu, method='excess')
+sq <- (6 + 2*K)/(6+4*K) * V
+nu <- 6/K + 4
+
+
+# Generates the approximations
+MC.reg.normal.cdf <- function(x) pnorm(x, m, s)
+MC.tail.normal.cdf <- function(x) pnorm(x, m, s.4)
+MC.t.cdf <- function(x) pt( (x-mu) / sqrt(sq) , nu)
+
+# Creates CDFs data
+data.x <- seq(qtile[1], qtile[2], length.out=2000)
+th.emp.cdf <- ecdf(simul.sample)(data.x)
+approx.reg.normal.cdf <- MC.reg.normal.cdf(data.x)
+approx.tail.normal.cdf <- MC.tail.normal.cdf(data.x)
+approx.t.cdf <- MC.t.cdf(data.x)
+
+# Plots the results
+dt <- data.frame(th.emp.cdf = th.emp.cdf, approx.reg.normal.cdf = approx.reg.normal.cdf, approx.tail.normal.cdf = approx.tail.normal.cdf, approx.t.cdf = approx.t.cdf)
+m.dt <- melt(dt, measure.vars=c("th.emp.cdf", "approx.reg.normal.cdf", "approx.tail.normal.cdf", "approx.t.cdf"))
+m.dt$x <- c(data.x, data.x, data.x, data.x)
+g <- ggplot(data=m.dt, aes(x=x)) + geom_line(aes(y=value, color=variable)) +
+  custom_opts() +
+    xlab("x") +
+      ylab("F(x)") +
+        scale_color_hue("CDFs", labels=c("Truth (empirical)   ", "Normal (head)   ", "Normal (tail)   ", "t   ")) +
+            opts(title=paste("Parameters: u1 = ", u1, ", s1 = ", s1, ", u2 = ", u2, ", s2 = ", s2,
+                           "\n            m1 = ", round(m1,2), ", sd1 = ",round(sd1,2), ", m2 = ", round(m2,2), ", sd2 = ", round(sd2,2),
+                   sep=""))
+         
+
+return(g)
+}
+
+
+get.convol.unlog.CDFs <- function(m1,sd1, m2, sd2, nl){
+
+# Here, m and v are given as log(E[Y]) and log(Var[Y]) instead
+# of u and s directly, so we need to explicitely convert them:
+
+v1 <- log(exp(sd1)^2)
+v2 <- log(exp(sd2)^2)
+  
+s1 <- sqrt(log(1 + exp(v1-2*m1)))
+u1 <- m1 - (s1^2)/2
+
+s2 <- sqrt(log(1 + exp(v2-2*m2)))
+u2 <- m2 - (s2^2)/2
+
   
 # Defines sample
 y1 <- rnorm(nl, u1, s1)
@@ -145,146 +220,40 @@ g <- ggplot(data=m.dt, aes(x=x)) + geom_line(aes(y=value, color=variable)) +
     xlab("x") +
       ylab("F(x)") +
         scale_color_hue("CDFs", labels=c("Truth (empirical)   ", "Normal (head)   ", "Normal (tail)   ", "t   ")) +
-            opts(title=paste("Parameters: u1 = ", u1, ", s1 = ", s1, ", u2 = ", u2, ", s2 = ", s2, sep=""))
+            opts(title=paste("Parameters: m1 = ", m1, ",    sd1 = ", sd1, ",    m2 = ", m2, ",    sd2 = ", sd2,
+                         "\n              u1 = ", round(u1,2), ", s1 = ", round(s1,2), ", u2 = ", round(u2,2), ", s2 = ", round(s2,2),
+                   sep=""))
          
 
 return(g)
 }
 
+get.EY.hm <- function(min.u, max.u, step.u, min.s, max.s, step.s){
 
-# equal low sds, varying means
-g1 <- get.convol.emp.all.CDFs(2, 1, 5, 1, 1000000)
-g2 <- get.convol.emp.all.CDFs(5, 1, 5, 1, 1000000)
-g3 <- get.convol.emp.all.CDFs(5, 1, 10, 1, 1000000)
-g4 <- get.convol.emp.all.CDFs(10, 1, 10, 1, 1000000)
+get.EY <- function (u,s) return(u + s^2/2)
 
-stack_plots(list(g1,g2,g3,g4), 2,2, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="equal_low_std.pdf")
+param.space <- expand.grid(u=seq(min.u, max.u, step.u), s=seq(min.s, max.s, step.s))
+EY <- apply(param.space, 1, function(x) get.EY(x[1], x[2]))
 
-# equal means, varying sds
-g1 <- get.convol.emp.all.CDFs(5, 1, 5, 1, 1000000)
-g2 <- get.convol.emp.all.CDFs(5, 3, 5, 1, 1000000)
-g3 <- get.convol.emp.all.CDFs(5, 5, 5, 1, 1000000)
-g4 <- get.convol.emp.all.CDFs(5, 2, 5, 2, 1000000)
-g5 <- get.convol.emp.all.CDFs(5, 3, 5, 3, 1000000)
-g6 <- get.convol.emp.all.CDFs(5, 4, 5, 4, 1000000)
+param.space <- data.frame(param.space)
+param.space$EY <- EY
 
-stack_plots(list(g1,g2,g3,g4,g5,g6), 2,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="equal_mean_varying_std.pdf")
+g <- ggplot(data=param.space, aes(x=u, y=s, fill=EY)) + geom_tile() + opts(title = "Log E[Y]")  + guides(fill=guide_legend(title="Log E[Y]"))
 
-# one mean low, one high, varying sds
-g1 <- get.convol.emp.all.CDFs(5, 1, 10, 1, 1000000)
-g2 <- get.convol.emp.all.CDFs(5, 3, 10, 1, 1000000)
-g3 <- get.convol.emp.all.CDFs(5, 5, 10, 1, 1000000)
-g4 <- get.convol.emp.all.CDFs(5, 1, 10, 2, 1000000)
-g5 <- get.convol.emp.all.CDFs(5, 1, 10, 3, 1000000)
-g6 <- get.convol.emp.all.CDFs(5, 1, 10, 6, 1000000)
-g7 <- get.convol.emp.all.CDFs(5, 2, 10, 2, 1000000)
-g8 <- get.convol.emp.all.CDFs(5, 3, 10, 3, 1000000)
-g9 <- get.convol.emp.all.CDFs(5, 5, 10, 5, 1000000)
+return(g)  
+}
 
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="mean_large_medium_varying_std.pdf")
+get.SDY.hm <- function(min.u, max.u, step.u, min.s, max.s, step.s){
 
-# Adhoc tests
+get.SDY <- function (u,s) return( log( sqrt( (exp(s^2) - 1) * exp(2 * u + (s^2)) ) ) )
 
-# low mean, varying variance
+param.space <- expand.grid(u=seq(min.u, max.u, step.u), s=seq(min.s, max.s, step.s))
+SDY <- apply(param.space, 1, function(x) get.SDY(x[1], x[2]))
 
-g1 <- get.convol.emp.all.CDFs(1, 0.1, 1, 0.1, 1000000)
-g2 <- get.convol.emp.all.CDFs(1, 0.5, 1, 0.1, 1000000)
-g3 <- get.convol.emp.all.CDFs(1, 1, 1, 0.1, 1000000)
-g4 <- get.convol.emp.all.CDFs(1, 0.2, 1, 0.2, 1000000)
-g5 <- get.convol.emp.all.CDFs(1, 0.6, 1, 0.6, 1000000)
-g6 <- get.convol.emp.all.CDFs(1, 1, 1, 1, 1000000)
-g7 <- get.convol.emp.all.CDFs(1, 0.7, 1, 0.6, 1000000)
-g8 <- get.convol.emp.all.CDFs(1, 0.7, 1, 0.9, 1000000)
-g9 <- get.convol.emp.all.CDFs(1, 0.6, 1, 0.9, 1000000)
+param.space <- data.frame(param.space)
+param.space$SDY <- SDY
 
-#g7 <- get.convol.emp.all.CDFs(1, 0.1, 2, 0.1, 1000000)
-#g8 <- get.convol.emp.all.CDFs(1, 0.6, 2, 0.1, 1000000)
-#g9 <- get.convol.emp.all.CDFs(1, 0.1, 2, 0.6, 1000000)
+g <- ggplot(data=param.space, aes(x=u, y=s, fill=SDY)) + geom_tile() + opts(title = "Log SD[Y]") + guides(fill=guide_legend(title="Log SD[Y]"))
 
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="low_mean_varying_var.pdf")
-
-
-# -- extension (2)
-g1 <- get.convol.emp.all.CDFs(1, 0.2, 1, 0.1, 1000000)
-g2 <- get.convol.emp.all.CDFs(1, 0.3, 1, 0.1, 1000000)
-g3 <- get.convol.emp.all.CDFs(1, 0.4, 1, 0.1, 1000000)
-g4 <- get.convol.emp.all.CDFs(1, 0.4, 1, 0.2, 1000000)
-g5 <- get.convol.emp.all.CDFs(1, 0.6, 1, 0.2, 1000000)
-g6 <- get.convol.emp.all.CDFs(1, 0.8, 1, 0.2, 1000000)
-g7 <- get.convol.emp.all.CDFs(1, 0.6, 1, 0.4, 1000000)
-g8 <- get.convol.emp.all.CDFs(1, 0.7, 1, 0.4, 1000000)
-g9 <- get.convol.emp.all.CDFs(1, 0.9, 1, 0.4, 1000000)
-
-#g7 <- get.convol.emp.all.CDFs(1, 0.1, 2, 0.1, 1000000)
-#g8 <- get.convol.emp.all.CDFs(1, 0.6, 2, 0.1, 1000000)
-#g9 <- get.convol.emp.all.CDFs(1, 0.1, 2, 0.6, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="low_mean_varying_var_2.pdf")
-
-# -- extension (3)
-g1 <- get.convol.emp.all.CDFs(1, 0.5, 1, 0.2, 1000000)
-g2 <- get.convol.emp.all.CDFs(1, 0.6, 1, 0.3, 1000000)
-g3 <- get.convol.emp.all.CDFs(1, 0.7, 1, 0.3, 1000000)
-g4 <- get.convol.emp.all.CDFs(1, 0.8, 1, 0.4, 1000000)
-g5 <- get.convol.emp.all.CDFs(1, 0.8, 1, 0.5, 1000000)
-g6 <- get.convol.emp.all.CDFs(1, 0.9, 1, 0.5, 1000000)
-g7 <- get.convol.emp.all.CDFs(1, 1, 1, 0.6, 1000000)
-g8 <- get.convol.emp.all.CDFs(1, 1, 1, 0.7, 1000000)
-g9 <- get.convol.emp.all.CDFs(1, 1, 1, 0.8, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="low_mean_varying_var_3.pdf")
-
-
-# Medium mean, varying variance
-g1 <- get.convol.emp.all.CDFs(5, 0.1, 5, 0.1, 1000000)
-g2 <- get.convol.emp.all.CDFs(5, 0.5, 5, 0.1, 1000000)
-g3 <- get.convol.emp.all.CDFs(5, 1, 5, 0.1, 1000000)
-g4 <- get.convol.emp.all.CDFs(5, 2, 5, 0.1, 1000000)
-g5 <- get.convol.emp.all.CDFs(5, 3, 5, 0.1, 1000000)
-g6 <- get.convol.emp.all.CDFs(5, 4, 5, 0.1, 1000000)
-g7 <- get.convol.emp.all.CDFs(5, 1, 5, 1, 1000000)
-g8 <- get.convol.emp.all.CDFs(5, 2, 5, 2, 1000000)
-g9 <- get.convol.emp.all.CDFs(5, 5, 5, 5, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="medium_mean_varying_var.pdf")
-
-# -- extension (2)
-
-g1 <- get.convol.emp.all.CDFs(5, 0.4, 5, 0.1, 1000000)
-g2 <- get.convol.emp.all.CDFs(5, 0.5, 5, 0.1, 1000000)
-g3 <- get.convol.emp.all.CDFs(5, 0.5, 5, 0.2, 1000000)
-g4 <- get.convol.emp.all.CDFs(5, 0.6, 5, 0.2, 1000000)
-g5 <- get.convol.emp.all.CDFs(5, 0.6, 5, 0.3, 1000000)
-g6 <- get.convol.emp.all.CDFs(5, 0.7, 5, 0.3, 1000000)
-g7 <- get.convol.emp.all.CDFs(5, 0.7, 5, 0.4, 1000000)
-g8 <- get.convol.emp.all.CDFs(5, 0.8, 5, 0.4, 1000000)
-g9 <- get.convol.emp.all.CDFs(5, 1, 5, 0.4, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="medium_mean_varying_var_2.pdf")
-
-
-
-# -- extension (3)
-
-g1 <- get.convol.emp.all.CDFs(5, 1.5, 5, 1, 1000000)
-g2 <- get.convol.emp.all.CDFs(5, 2, 5, 1.5, 1000000)
-g3 <- get.convol.emp.all.CDFs(5, 2.5, 5, 2, 1000000)
-g4 <- get.convol.emp.all.CDFs(5, 3, 5, 2.5, 1000000)
-g5 <- get.convol.emp.all.CDFs(5, 3.5, 5, 3, 1000000)
-g6 <- get.convol.emp.all.CDFs(5, 4, 5, 3.5, 1000000)
-g7 <- get.convol.emp.all.CDFs(5, 4.5, 5, 4, 1000000)
-g8 <- get.convol.emp.all.CDFs(5, 5, 5, 4.5, 1000000)
-g9 <- get.convol.emp.all.CDFs(5, 4, 5, 3, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6,g7,g8,g9), 3,3, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="medium_mean_varying_var_3.pdf")
-
-
-# -- extension (4)
-g1 <- get.convol.emp.all.CDFs(5, 1.5, 5, 0.5, 1000000)
-g2 <- get.convol.emp.all.CDFs(5, 2.5, 5, 1.5, 1000000)
-g3 <- get.convol.emp.all.CDFs(5, 3, 5, 2, 1000000)
-g4 <- get.convol.emp.all.CDFs(5, 3.5, 5, 2.5, 1000000)
-g5 <- get.convol.emp.all.CDFs(5, 4, 5, 3, 1000000)
-g6 <- get.convol.emp.all.CDFs(5, 5, 5, 3.5, 1000000)
-
-stack_plots(list(g1,g2,g3,g4,g5,g6), 3,2, title.common="CDF Comparison", legend.common=T, axis.common=c("x", "F(x)"), fout="medium_mean_varying_var_4.pdf")
+return(g)  
+}
