@@ -1,9 +1,10 @@
-require(ggplot2)
-require(reshape2)
-require(grid)
-require(PerformanceAnalytics)
-source('/Users/gwb/Hacks/Projects/myRUtils/graphics.R')
 
+args <- commandArgs(trailingOnly=TRUE)
+filename <- args[1]
+row.index <- as.integer(args[2])
+filepath_out <- args[3]
+
+params <- read.csv(filename)
 
 
 get.convo.emp.cdf <- function(m1, sd1, m2, sd2, n.points, n.sample){
@@ -84,31 +85,6 @@ get.cdf.data <- function(m1, sd1, m2, sd2, n.sim, n.points=100, n.samples=200){
 }
 
 
-plot.analytical.closeness <- function(m1, sd1, m2, sd2, n.sim, n.points=100, n.samples=200){
-
-  v1 <- log(exp(sd1)^2)
-  v2 <- log(exp(sd2)^2)
-  
-  s1 <- sqrt(log(1 + exp(v1-2*m1)))
-  u1 <- m1 - (s1^2)/2
-
-  s2 <- sqrt(log(1 + exp(v2-2*m2)))
-  u2 <- m2 - (s2^2)/2
-  
-  dt <- get.cdf.data(m1, sd1, m2, sd2, n.sim)
-  dt <- melt(foo, measure.vars=c("l", "m", "u", "approx"))
-  g <- ggplot(data=dt, aes(x=x)) + geom_line(aes(y=value, color=variable)) +
-      custom_opts() +
-        xlab("x") +
-          ylab("F(x)") +
-            opts(title=paste("Parameters: m1 = ", m1, ",    sd1 = ", sd1, ",    m2 = ", m2, ",    sd2 = ", sd2,
-                   "\n              u1 = ", round(u1,2), ", s1 = ", round(s1,2), ", u2 = ", round(u2,2), ", s2 = ", round(s2,2),
-                   sep=""))
-  
-  return(g)
-}
-
-
 test.cdf.closeness <- function(m1, sd1, m2, sd2, n.sim, n.points=100, n.samples=200){
   dt <- get.cdf.data(m1, sd1, m2, sd2, n.sim)
   res <- with(dt, (approx < l) | (u < approx))
@@ -116,48 +92,14 @@ test.cdf.closeness <- function(m1, sd1, m2, sd2, n.sim, n.points=100, n.samples=
 }
 
 
+m1 <- params$m1[row.index]
+m2 <- params$m2[row.index]
+sd1 <- params$sd1[row.index]
+sd2 <- params$sd2[row.index]
 
-# TESTS
-m1 <- 3
-sd1 <- 1
-m2 <- 4
-sd2 <- 2
+res <- test.cdf.closeness(m1, sd1, m2, sd2, 2000000, n.points=200)
 
-test.cdf.closeness(m1, sd1, m2, sd2, 2000000)
+dt.out <- data.frame(m1=m1, m2=m2, sd1=sd1, sd2=sd2, distance=res)
 
-foo <- get.cdf.data(m1, sd1, m2, sd2, 2000000)
-mfoo <- melt(foo, measure.vars=c("l", "m", "u", "approx"))
-ggplot(data=mfoo, aes(x=x)) + geom_line(aes(y=value, color=variable))
-
-
-m1 <- 1
-sd1 <- 3
-m2 <- 9
-sd2 <- 3
-
-foo <- get.cdf.data(m1, sd1, m2, sd2, 2000000)
-mfoo <- melt(foo, measure.vars=c("l", "m", "u", "approx"))
-ggplot(data=mfoo, aes(x=x)) + geom_line(aes(y=value, color=variable))
-
-
-m1 <- 1
-sd1 <- 1
-m2 <- 9
-sd2 <- 1
-
-foo <- get.cdf.data(m1, sd1, m2, sd2, 2000000)
-mfoo <- melt(foo, measure.vars=c("l", "m", "u", "approx"))
-ggplot(data=mfoo, aes(x=x)) + geom_line(aes(y=value, color=variable))
-
-
-m1 <- 3.5
-m2 <- 6
-sd1 <- 3.7
-sd2 <- 7.9
-
-test.cdf.closeness(m1, sd1, m2, sd2, 2000000, n.points=200)
-
-foo <- get.cdf.data(m1, sd1, m2, sd2, 2000000, n.points=200)
-mfoo <- melt(foo, measure.vars=c("l", "m", "u", "approx"))
-ggplot(data=mfoo, aes(x=x)) + geom_line(aes(y=value, color=variable))
+write.csv(dt.out, filepath_out)
 
