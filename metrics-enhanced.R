@@ -4,10 +4,11 @@ require(fastGHQuad)
 
 # Parameters
 param.file <- "params.csv"
-base.filepath.out <- "res/out"
+base.filepath.out <- "/n/airoldifs2/lab/gbasse/lognormals/res/out"
+number_of_simulations = 4
 row.number <- 10
-GH.n.nodes <- 50
-numiter = 1000
+GH.n.nodes <- 20#100
+numiter = 200#2000
 
 
 # Command line arguments
@@ -25,6 +26,23 @@ get.log.integrand <- function(t, u1, u2, s1, s2){
 }
 
 get.log.first.deriv <- function(t, u1, u2, s1, s2){
+  fn <- function(x){
+    a <- 1 / ( (t - exp(x)) * sqrt(2*pi*s1^2) )
+    b <- exp( -( log(t-exp(x)) - u1 )^2 / (2*s1^2) )
+    c <- 1 / sqrt(2*pi*s2^2) * exp( -(x-u2)^2 / (2*s2^2) )
+    
+    a.p <-  exp(x) / ( (t-exp(x))^2 * sqrt(2*pi*s1^2) )
+    b.p <- (log(t - exp(x)) - u1) / ( (t*exp(-x) - 1) * s1^2 ) * b
+    c.p <- - (x-u2) / s2^2 * c
+
+    res <- a.p * b * c + a * b.p * c + a * b * c.p
+    
+    return(res)
+  }
+  return(fn)
+}
+
+get.log.first.deriv.num <- function(t, u1, u2, s1, s2){
 
   intg <- get.log.integrand(t, u1, u2, s1, s2)
   fn <- function(x){
@@ -35,6 +53,29 @@ get.log.first.deriv <- function(t, u1, u2, s1, s2){
 
 get.log.second.deriv <- function(t, u1, u2, s1, s2){
 
+  fn <- function(x){
+    a <- 1 / ( (t - exp(x)) * sqrt(2*pi*s1^2) )
+    b <- exp( -( log(t-exp(x)) - u1 )^2 / (2*s1^2) )
+    c <- 1 / sqrt(2*pi*s2^2) * exp( -(x-u2)^2 / (2*s2^2) )
+    
+    a.p <-  exp(x) / ( (t-exp(x))^2 * sqrt(2*pi*s1^2) )
+    b.p <- (log(t - exp(x)) - u1) / ( (t*exp(-x) - 1) * s1^2 ) * b
+    c.p <- - (x-u2) / s2^2 * c
+
+    a.pp <- (  exp(x) * (t-exp(x)) + 2*exp(2*x) ) / ( (t-exp(x))^3 * sqrt(2*pi*s1^2) )
+    b.pp <- (  -exp(x) / (t - exp(x)) * 1 / ( (t*exp(-x) - 1) * s1^2 )  + (log(t-exp(x)) - u1) * t*exp(-x) / ( (t*exp(-x) - 1)^2 * s1^2 ) + ( (log(t-exp(x)) - u1)/( (t*exp(-x) -1) * s1^2 ) )^2  ) * b
+    c.pp <- (  -1 / ( s2^2 * sqrt(2*pi*s2^2) )  + 1 / sqrt(2*pi*s2^2) * ( - (x-u2)/s2^2 )^2  ) * exp( -(x-u2)^2 / (2*s2^2) )
+    
+    res <- a.pp* b * c + a.p * b.p * c + a.p * b * c.p +
+      a.p * b.p * c + a * b.pp * c + a * b.p * c.p +
+        a.p * b * c.p + a * b.p * c.p + a * b * c.pp
+    return(res)
+  }
+  return(fn)
+}
+
+get.log.second.deriv.num <- function(t, u1, u2, s1, s2){
+
   intg <- get.log.integrand(t, u1, u2, s1, s2)
   fn <- function(x){
     return(hessian(intg, x))
@@ -42,15 +83,71 @@ get.log.second.deriv <- function(t, u1, u2, s1, s2){
   return(fn)
 }
 
-get.mu.hat.alt <- function(t, u1, u2, s1, s2){
+
+get.mu.hat<- function(t, u1, u2, s1, s2, eps = 0.0000001){
+
+  fn <- function(x){
+    return( exp(x)/( t-exp(x) )  + exp(x) / (t - exp(x)) * ( log(t-exp(x)) - u1 ) / s1^2 - (x - u2) / s2^2 )
+  }
+
+  a0 = b0 = ifelse(log(t) >0, log(t) / 2, log(t) * 3/2) #min(max(u1,u2), abs(log(t))/2) # prevents a0 and b0 from being bigger than t
+
+  if (is.na(fn(a0))){
+    print(a0)
+    print(t)
+    print(u1)
+    print(u2)
+    print(s1)
+    print(s2)
+  }
+
+  #browser()
+  while(fn(a0) <= 0){
+    #a0 <- max(a0 - 10, a0 / 2)
+    tmp <- a0
+    a0 <- a0 - abs(log(t)) / 2
+    count <- 1
+    while(is.na(fn(a0))){
+      a0 <- tmp - abs(log(t)) / i
+      i = i+1
+    }
+    #if (is.na(fn(a0))){print(a0)}
+  }
+  #browser()
+  while(fn(b0) >= 0){
+    b0 <- min(b0 + 10, b0 + (log(t)-b0) / 2)
+  }
+
+  
+  # use the bisection method
+  #while( abs( fn( (a0+b0)/2 ) ) > eps ){
+  #  u = (a0 + b0) / 2
+  #  if (fn(u) < 0){
+  #    b0 = u
+  #  }else{
+  #    a0 = u
+  #  }
+  #}
+
   intg <- get.log.integrand(t, u1, u2, s1, s2)
-  return(optimize(intg, c(-t,log(t)), maximum=T)$maximum)
+  return(optimize(intg, c(a0, b0), maximum=T)$maximum)
+  #return( (a0 + b0) / 2 )
+    
+  
 }
+
+# get.mu.hat.alt(0.1915875, -3.656631, -2.063464, 1.145976, 0.3562696) => -0.191
+# which corresponds to -t, the inferior bound. So it's clearly wrong
+
+#get.mu.hat.alt <- function(t, u1, u2, s1, s2){
+#  intg <- get.log.integrand(t, u1, u2, s1, s2)
+#  return(optimize(intg, c(-t,log(t)), maximum=T)$maximum)
+#}
 
 get.convol.density <- function(u1, u2, s1, s2){
   fn <- function(t){
     intg <- get.log.integrand(t, u1, u2, s1, s2)
-    u.hat <- get.mu.hat.alt(t, u1, u2, s1, s2)
+    u.hat <- get.mu.hat(t, u1, u2, s1, s2)
     s.hat <- 1/sqrt(-get.log.second.deriv(t, u1, u2, s1, s2)(u.hat))
     #s.hat <- 1 / sqrt(- hessian(intg, u.hat))
     rule <- gaussHermiteData(GH.n.nodes)
@@ -157,7 +254,30 @@ for (i in seq(1, row.count)){
   m2 <- params$m2[ind]
   sd1 <- params$sd1[ind]
   sd2 <- params$sd2[ind]
-  distance <- test.mcmc(m1, m2, sd1, sd2, numiter=numiter)[[2]]
+
+  # transforming params
+  v1 <- log(exp(sd1)^2)
+  v2 <- log(exp(sd2)^2)
+  
+  s1 <- sqrt(log(1 + exp(v1-2*m1)))
+  u1 <- m1 - (s1^2)/2
+
+  s2 <- sqrt(log(1 + exp(v2-2*m2)))
+  u2 <- m2 - (s2^2)/2
+  
+  # simulates from convolution
+  sim <- log(rlnorm(100000, u1, s1) + rlnorm(100000,u2, s2))
+
+  # extract quantiles 
+  qtile = quantile(sim, probs=seq(0.01, 0.99, length.out=number_of_simulations))
+  
+  tmp.distance.vect = NULL
+  for (i in seq(1, number_of_simulations)){
+    distance <- test.mcmc(m1, m2, sd1, sd2, x0=exp(qtile[i]), numiter=numiter)[[2]]
+    tmp.distance.vect <- c(tmp.distance.vect, distance)
+  }
+
+  distance = mean(tmp.distance.vect, na.rm=T)
 
   if (is.na(distance)){ next }
   
@@ -170,6 +290,8 @@ for (i in seq(1, row.count)){
 }
   
 dt.out <- data.frame(m1=m1.list, m2=m2.list, sd1=sd1.list, sd2=sd2.list, distance=distance.list)
+
+#print(dt.out)
 
 write.csv(dt.out, filepath_out)
 
