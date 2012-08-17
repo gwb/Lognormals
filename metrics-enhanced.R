@@ -87,7 +87,7 @@ get.log.second.deriv.num <- function(t, u1, u2, s1, s2){
 get.mu.hat<- function(t, u1, u2, s1, s2, eps = 0.0000001){
 
   fn <- function(x){
-    return( exp(x)/( t-exp(x) )  + exp(x) / (t - exp(x)) * ( log(t-exp(x)) - u1 ) / s1^2 - (x - u2) / s2^2 )
+    return( exp(x)/( t-exp(x) )  + exp(x) / (t - exp(x)) * ( log(t-exp(x)) - u1 ) / s1^2 - (x - u2) / s2^2 - 1)
   }
 
   a0 = b0 = ifelse(log(t) >0, log(t) / 2, log(t) * 3/2) #min(max(u1,u2), abs(log(t))/2) # prevents a0 and b0 from being bigger than t
