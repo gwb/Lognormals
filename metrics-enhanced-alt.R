@@ -3,8 +3,8 @@
 
 # Parameters
 param.file <- "params.csv"
-#base.filepath.out <- "/n/airoldifs2/lab/gbasse/lognormals/res/out"
-base.filepath.out <- "res/out"
+base.filepath.out <- "/n/airoldifs2/lab/gbasse/lognormals/res/out"
+#base.filepath.out <- "res/out"
 number_of_simulations = 4
 row.number <- 10
 GH.n.nodes <- 20#100
