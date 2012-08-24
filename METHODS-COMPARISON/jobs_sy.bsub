@@ -1,0 +1,7 @@
+
+#BSUB -J mcjobs[1-3024]
+#BSUB -o mcjobs_LSF.out
+#BSUB -e mcjobs_LSF.err
+#BSUB -q short_serial
+
+Rscript compare-rejection.R ${LSB_JOBINDEX} SY > mcjobs_LSF.out 2> mcjobs_LSF.err
