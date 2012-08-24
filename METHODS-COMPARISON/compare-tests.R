@@ -205,6 +205,10 @@ get.WU <- function(u1, u2, s1, s2, t1, t2, initv=c(0,1), maxiter=1000){
 }
 
 
+
+
+
+
 test.FW <- function(u1, u2, s1, s2){
   res <- get.FW(u1, u2, s1, s2)
   n.u <- res[1]
