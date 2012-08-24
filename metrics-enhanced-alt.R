@@ -2,13 +2,13 @@
 
 
 # Parameters
-param.file <- "params.csv"
-base.filepath.out <- "/n/airoldifs2/lab/gbasse/lognormals/res/out"
+param.file <- "params-reversed-3.csv"
+base.filepath.out <- "/n/airoldifs2/lab/gbasse/lognormals/DOMAIN-VALIDITY/res/out"
 #base.filepath.out <- "res/out"
-number_of_simulations = 4
+number_of_simulations = 10
 row.number <- 10
 GH.n.nodes <- 20#100
-numiter = 200#2000
+numiter = 2000
 
 
 # Command line arguments
@@ -18,7 +18,7 @@ filepath_out <- paste(base.filepath.out, row.index, ".csv", sep="")
 
 
 
-get.convol.density <- function(u1, u2, s1, s2, probs=c(0.0001, 0.9999), n.sim=5000000, n.points=2^13){
+get.convol.density <- function(u1, u2, s1, s2, probs=c(0.0001, 0.9999), n.sim=3000000, n.points=2^13){
 
   sim <- rlnorm(n.sim, u1, s1) + rlnorm(n.sim, u2, s2)
   lsim <- log(sim)
@@ -74,10 +74,10 @@ test.mcmc <- function(m1, m2, sd1, sd2, x0=NULL, numiter=100){
   v1 <- log(exp(sd1)^2)
   v2 <- log(exp(sd2)^2)
   
-  s1 <- sqrt(log(1 + exp(v1-2*m1)))
+  s1 <- sqrt(log1p(exp(v1-2*m1)))
   u1 <- m1 - (s1^2)/2
 
-  s2 <- sqrt(log(1 + exp(v2-2*m2)))
+  s2 <- sqrt(log1p(exp(v2-2*m2)))
   u2 <- m2 - (s2^2)/2
   
   # Get MOM parameters
@@ -132,10 +132,10 @@ for (i in seq(1, row.count)){
   v1 <- log(exp(sd1)^2)
   v2 <- log(exp(sd2)^2)
   
-  s1 <- sqrt(log(1 + exp(v1-2*m1)))
+  s1 <- sqrt(log1p(exp(v1-2*m1)))
   u1 <- m1 - (s1^2)/2
 
-  s2 <- sqrt(log(1 + exp(v2-2*m2)))
+  s2 <- sqrt(log1p(exp(v2-2*m2)))
   u2 <- m2 - (s2^2)/2
   
   # simulates from convolution

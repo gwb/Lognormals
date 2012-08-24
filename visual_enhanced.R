@@ -1,4 +1,3 @@
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # 
 # The script is an ad-hoc method for measuring the distance,
@@ -14,7 +13,7 @@
 
 
 # Parameters
-param.file <- "params.csv"
+param.file <- "params-reversed-3.csv"
 base.filepath.out <- "res/out"
 row.number <- 10
 
@@ -31,10 +30,10 @@ get.convo.emp.cdf <- function(m1, sd1, m2, sd2, n.points, n.sample){
   v1 <- log(exp(sd1)^2)
   v2 <- log(exp(sd2)^2)
   
-  s1 <- sqrt(log(1 + exp(v1-2*m1)))
+  s1 <- sqrt(log1p(exp(v1-2*m1)))
   u1 <- m1 - (s1^2)/2
 
-  s2 <- sqrt(log(1 + exp(v2-2*m2)))
+  s2 <- sqrt(log1p(exp(v2-2*m2)))
   u2 <- m2 - (s2^2)/2
   
   samples.cdf = list()
@@ -76,10 +75,10 @@ get.cdf.data <- function(m1, sd1, m2, sd2, n.sim, n.points=100, n.samples=200){
   v1 <- log(exp(sd1)^2)
   v2 <- log(exp(sd2)^2)
   
-  s1 <- sqrt(log(1 + exp(v1-2*m1)))
+  s1 <- sqrt(log1p(exp(v1-2*m1)))
   u1 <- m1 - (s1^2)/2
 
-  s2 <- sqrt(log(1 + exp(v2-2*m2)))
+  s2 <- sqrt(log1p(exp(v2-2*m2)))
   u2 <- m2 - (s2^2)/2
   
   dt <- get.convo.emp.cdf(m1, sd1, m2, sd2, n.points, n.samples)
